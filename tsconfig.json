@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "lib": ["es2021"],
+    "module": "commonjs",
+    "rootDir": "./",
+    "outDir": "./dist",
+    "esModuleInterop": true,
+    "typeRoots": ["./node_modules/@types"],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "useDefineForClassFields": false,
+    "resolveJsonModule": true
+  },
+  "exclude": ["node_modules"]
+}

@@ -1,0 +1,36 @@
+{
+  "name": "quikdraw",
+  "version": "0.0.2",
+  "description": "A CLI tool to bring your Truffle project onto Kontour",
+  "main": "dist/index.js",
+  "bin": {
+    "quikdraw": "./cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p ./"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/harvestlabs/quikdraw.git"
+  },
+  "keywords": [
+    "web3",
+    "sdk",
+    "compiler",
+    "solidity",
+    "typescript"
+  ],
+  "author": "Harvest Labs Inc.",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/harvestlabs/quikdraw/issues"
+  },
+  "homepage": "https://github.com/harvestlabs/quikdraw#readme",
+  "dependencies": {
+    "crypto": "^1.0.1",
+    "form-data": "^4.0.0",
+    "node-fetch": "2",
+    "p-limit": "3.1.0",
+    "truffle": "^5.5.3"
+  }
+}
