@@ -34,7 +34,7 @@ const Commands = {
       truffleConfig = path.join(currDir, truffleConfig);
     }
     const apiKey = await askQuestion(
-      "\nGrab your API key from kontour.io/key [null]: "
+      "\nGrab your API key from https://kontour.io/key (required!): "
     );
     const projectId = await askQuestion("\nDefault projectId [null]: ");
     const contracts = await askQuestion(
@@ -68,6 +68,12 @@ const Commands = {
       );
     }
     const data: ConfigData = JSON.parse(fs.readFileSync(configFile).toString());
+    if (!data.apiKey || data.apiKey.length === 0) {
+      console.log(
+        "Sorry, you've gotta have an API key to use Kontour - visit https://kontour.io/key to get one for free!"
+      );
+      process.exit(0);
+    }
     const truffleConfig = require(data.truffleConfigPath);
     await truffle.contracts.compile(truffleConfig);
     console.log("\nUploading compiled sources to Kontour now...");
