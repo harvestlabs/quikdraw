@@ -1,16 +1,22 @@
-import truffle from "truffle";
 import fs from "fs";
 import path from "path";
 import FormData from "form-data";
 import fetch from "node-fetch";
 import pLimit from "p-limit";
-import { CONFIG_NAME, INIT_CMD, GO_CMD, INGEST_URL } from "./lib/constants";
+import {
+  HELP_URL,
+  CONFIG_NAME,
+  INIT_CMD,
+  GO_CMD,
+  INGEST_URL,
+} from "./lib/constants";
 import { askQuestion, configSearch } from "./lib/helpers";
 import { ConfigData } from "./lib/types";
 
 const limit = pLimit(4);
 const configFile = configSearch();
 const currDir = process.cwd();
+const IS_WIN = process.platform === "win32";
 
 const Commands = {
   init: async () => {
@@ -26,26 +32,48 @@ const Commands = {
       toWritePath = `${currDir}/${CONFIG_NAME}`;
       console.log(`Writing new config at ${toWritePath}`);
     }
-    const defaultTruffle = `${currDir}/truffle.config.js`;
-    let truffleConfig = await askQuestion(
-      `\nLocation of your truffle.config.js [${defaultTruffle}]: `
+    let selection = await askQuestion(
+      `\nAre you using truffle or hardhat to manage your environment?
+(1) truffle
+(2) hardhat
+(3) I'm not sure how to get started, help me out? [default - 3]: `
     );
-    if (truffleConfig && !path.isAbsolute(truffleConfig)) {
-      truffleConfig = path.join(currDir, truffleConfig);
+    let truffleConfig, type;
+    switch (selection) {
+      case "1":
+        type = "truffle";
+        truffleConfig = await askQuestion(
+          `\nLocation of your truffle-config.js [./truffle-config.js]: `
+        );
+        if (truffleConfig && !path.isAbsolute(truffleConfig)) {
+          truffleConfig = path.join(currDir, truffleConfig);
+        }
+        break;
+      case "2":
+        type = "hardhat";
+        break;
+      default:
+        console.log(
+          `\nKontour currently only supports hardhat or truffle users - we'd love to hear about any additional feature requests!
+Come visit our team at ${HELP_URL} and we'll get you all set up!`
+        );
+        process.exit(0);
     }
+
     const apiKey = await askQuestion(
       "\nGrab your API key from https://kontour.io/key (required!): "
     );
     const projectId = await askQuestion("\nDefault projectId [null]: ");
     const contracts = await askQuestion(
-      "\nComma-separated list of contracts to upload to Kontour [*]: "
+      "\nComma-separated list of contracts to upload to Kontour [.*]: "
     );
 
     const data: ConfigData = {
-      truffleConfigPath: truffleConfig || defaultTruffle,
+      type: type,
+      truffleConfigPath: truffleConfig || "",
       apiKey,
       projectId,
-      contracts: contracts || "*",
+      contracts: contracts || ".*",
     };
     fs.writeFileSync(toWritePath, JSON.stringify(data));
 
@@ -66,6 +94,7 @@ const Commands = {
       console.log(
         `${CONFIG_NAME} doesn't exist - have you run 'quikdraw init'?\n`
       );
+      process.exit(0);
     }
     const data: ConfigData = JSON.parse(fs.readFileSync(configFile).toString());
     if (!data.apiKey || data.apiKey.length === 0) {
@@ -74,20 +103,48 @@ const Commands = {
       );
       process.exit(0);
     }
-    const truffleConfig = require(data.truffleConfigPath);
-    await truffle.contracts.compile(truffleConfig);
+    let fqPath, compiledContractPaths;
+    if (data.type === "truffle") {
+      const truffle = require("truffle");
+      const truffleConfig = require(data.truffleConfigPath);
+      await truffle.contracts.compile(truffleConfig);
+      fqPath = truffleConfig.contracts_build_directory;
+      fqPath = path.resolve(currDir, truffleConfig.contracts_build_directory);
+      compiledContractPaths = fs
+        .readdirSync(fqPath)
+        .map((c) => path.join(fqPath, c));
+    } else if (data.type === "hardhat") {
+      const hre = require("hardhat");
+      await hre.run("compile");
+      const artifacts = hre.config.paths.artifacts;
+      const sourcesPath = path.relative(currDir, hre.config.paths.sources);
+      const parentPath = path.resolve(
+        currDir,
+        path.join(artifacts, sourcesPath)
+      );
+
+      const contracts = fs.readdirSync(parentPath);
+      compiledContractPaths = [];
+      contracts.forEach((contractPath) => {
+        const fullPath = path.join(parentPath, contractPath);
+        const jsonFile = fs.readdirSync(fullPath).filter((filename) => {
+          const parts = filename.split(".");
+          return parts.indexOf("dbg") !== parts.length - 2;
+        })[0];
+        compiledContractPaths.push(path.resolve(fullPath, jsonFile));
+      });
+    } else {
+      console.log(".quikdrawconfig had a type that was unknown");
+      process.exit(0);
+    }
     console.log("\nUploading compiled sources to Kontour now...");
 
-    let fqPath = truffleConfig.contracts_build_directory;
-    fqPath = path.resolve(currDir, truffleConfig.contracts_build_directory);
-    const compiledContracts = fs.readdirSync(fqPath);
     const filterContractNames = data.contracts
       .split(",")
-      .map((n) => new RegExp(n));
+      .map((n) => new RegExp(n.trim()));
     await Promise.all(
-      compiledContracts.map(async (c) => {
+      compiledContractPaths.map(async (contractPath) => {
         return limit(async () => {
-          const contractPath = path.join(fqPath, c);
           let readBuffer = fs.readFileSync(contractPath);
 
           const contract = JSON.parse(readBuffer.toString());
@@ -98,7 +155,7 @@ const Commands = {
             return;
           }
 
-          console.log(`Uploading ${c}`);
+          console.log(`Uploading ${contract.contractName}`);
           const form = new FormData();
           form.append("file", readBuffer, "file.json");
           form.append("apiKey", data.apiKey);
@@ -107,7 +164,7 @@ const Commands = {
             body: form,
             headers: { ...form.getHeaders() },
           });
-          console.log(`Uploaded ${c}`);
+          console.log(`Uploaded ${contract.contractName}`);
         });
       })
     );
