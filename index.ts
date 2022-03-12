@@ -9,14 +9,16 @@ import {
   INIT_CMD,
   GO_CMD,
   INGEST_URL,
+  PROJECT_HOST,
 } from "./lib/constants";
 import { askQuestion, configSearch } from "./lib/helpers";
 import { ConfigData } from "./lib/types";
 
+global.randomBytes = require("crypto").randomBytes;
+
 const limit = pLimit(4);
 const configFile = configSearch();
 const currDir = process.cwd();
-const IS_WIN = process.platform === "win32";
 
 const Commands = {
   init: async () => {
@@ -42,9 +44,10 @@ const Commands = {
     switch (selection) {
       case "1":
         type = "truffle";
-        truffleConfig = await askQuestion(
-          `\nLocation of your truffle-config.js [./truffle-config.js]: `
-        );
+        truffleConfig =
+          (await askQuestion(
+            `\nLocation of your truffle-config.js [./truffle-config.js]: `
+          )) || "./truffle-config.js";
         if (truffleConfig && !path.isAbsolute(truffleConfig)) {
           truffleConfig = path.join(currDir, truffleConfig);
         }
@@ -54,8 +57,10 @@ const Commands = {
         break;
       default:
         console.log(
-          `\nKontour currently only supports hardhat or truffle users - we'd love to hear about any additional feature requests!
-Come visit our team at ${HELP_URL} and we'll get you all set up!`
+          `Kontour currently only supports hardhat or truffle users - we'd love to hear about any additional feature requests!`
+        );
+        console.log(
+          `\nCome visit our team at ${HELP_URL} and we'll get you all set up!`
         );
         process.exit(0);
     }
@@ -73,6 +78,7 @@ Come visit our team at ${HELP_URL} and we'll get you all set up!`
       truffleConfigPath: truffleConfig || "",
       apiKey,
       projectId,
+      versionId: "",
       contracts: contracts || ".*",
     };
     fs.writeFileSync(toWritePath, JSON.stringify(data));
@@ -81,13 +87,6 @@ Come visit our team at ${HELP_URL} and we'll get you all set up!`
     process.exit(0);
   },
   go: async () => {
-    // contracts_directory: String. Directory where .sol files can be found.
-    // contracts_build_directory: String. Directory where .sol.js files can be found and written to.
-    // all: Boolean. Compile all sources found. Defaults to true. If false, will compare sources against built files
-    //      in the build directory to see what needs to be compiled.
-    // network_id: network id to link saved contract artifacts.
-    // quiet: Boolean. Suppress output. Defaults to false.
-    // strict: Boolean. Return compiler warnings as errors. Defaults to false.
     try {
       fs.statSync(configFile);
     } catch (e) {
@@ -142,8 +141,22 @@ Come visit our team at ${HELP_URL} and we'll get you all set up!`
     const filterContractNames = data.contracts
       .split(",")
       .map((n) => new RegExp(n.trim()));
+
+    let projectData;
+    const resp = await fetch(`${INGEST_URL}/start`, {
+      method: "POST",
+      body: JSON.stringify({
+        apiKey: data.apiKey,
+        projectId: data.projectId || null,
+        versionId: data.versionId || null,
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+    const { projectId, versionId } = await resp.json();
+    console.log(`\nUploading to project ${projectId}, version ${versionId}`);
+
     await Promise.all(
-      compiledContractPaths.map(async (contractPath) => {
+      compiledContractPaths.map((contractPath) => {
         return limit(async () => {
           let readBuffer = fs.readFileSync(contractPath);
 
@@ -159,6 +172,8 @@ Come visit our team at ${HELP_URL} and we'll get you all set up!`
           const form = new FormData();
           form.append("file", readBuffer, "file.json");
           form.append("apiKey", data.apiKey);
+          form.append("projectId", projectId);
+          form.append("versionId", versionId);
           await fetch(INGEST_URL, {
             method: "POST",
             body: form,
@@ -168,6 +183,26 @@ Come visit our team at ${HELP_URL} and we'll get you all set up!`
         });
       })
     );
+    await fetch(`${INGEST_URL}/end`, {
+      method: "POST",
+      body: JSON.stringify({
+        apiKey: data.apiKey,
+        projectId: projectId,
+        versionId: versionId,
+      }),
+      headers: { "Content-Type": "application/json" },
+    });
+    console.log(
+      `Find your project at ${PROJECT_HOST}/${projectId}/${versionId}`
+    );
+    const refresh = await askQuestion(
+      `Do you want to update your current project settings to this draft? [Y/n]: `
+    );
+    if (refresh !== "n") {
+      data.projectId = projectId;
+      data.versionId = versionId;
+      fs.writeFileSync(configFile, JSON.stringify(data));
+    }
     process.exit(0);
   },
 };

@@ -3,5 +3,6 @@ export interface ConfigData {
   truffleConfigPath: string;
   apiKey: string;
   projectId: string;
+  versionId: string;
   contracts: string;
 }
