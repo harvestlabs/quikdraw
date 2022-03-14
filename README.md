@@ -1,23 +1,24 @@
 # Quikdraw
 ### A CLI sidekick to [Kontour](https://kontour.io), the superpowered web3 private testnet.
 
+
 ## Getting started
 1. Install Quikdraw globally
    ```
    npm install -g quikdraw
    ```
-2. Navigate to your smart contract repo - this is normally the path where you've installed Truffle or Hardhat
+2. Navigate to your smart contract repo. This is normally the path where you've installed Truffle or Hardhat.
 3. Initialize Quikdraw by answering a few simple questions (this example is for a Truffle repo)
     ```
     quikdraw init
     ```
-4. Write some awesome awesome contract code
+4. Write some <b>awesome awesome contract code</b>
 5. You're ready to test your contracts and your client dev teammate is waiting for you to deploy to a shared testnet. Have no fear, you don't need to go to a faucet or upload those pesky ABIs anywhere! Just run
    ```
    quikdraw go
    ```
 6. Your contracts will be deployed to a new project, as a new draft version. We'll give you a handy Kontour link and save these settings for the next time around.
-7. Enjoy using Kontour to browse your private test node and share a one-click SDK url to your teammates! Whenever you want to deploy a new round of contracts, just `quikdraw go` and your team will automatically be up to date, with zero address sharing, zero ABIs, zero test tokens, and zero client changes necessary!
+7. Enjoy using Kontour to browse your private test node and share a one-click SDK url to your teammates! Whenever you want to deploy a new round of contracts, just `quikdraw go` and your team will automatically be up to date, with <b>zero address sharing, zero ABIs, zero test tokens, and zero client changes necessary!</b>
 
 ## Details
 ### quikdraw init
@@ -54,7 +55,7 @@ Uploaded VotableBounty
 Find your project at https://kontour.io/projects/36142e64-2367-42fc-b996-54ab0600a602/bd47e6e7-1311-4a7c-8137-f80361c6d2ee
 Do you want to update your current project settings to this draft? [Y/n]: Y
 ```
-Under the hood, quikdraw triggers your project's Truffle or Hardhat compilation. It then takes those compiled artifacts and sends them to your private Kontour project, which makes them available to add to your node. Whenever you make changes and compile a new set of contracts, your Kontour draft will update to those new versions.
+Under the hood, Quikdraw triggers your project's Truffle or Hardhat compilation. It then takes those compiled artifacts and sends them to your private Kontour project, which makes them available to add to your node. Whenever you make changes and compile a new set of contracts, your Kontour draft will update to those new versions.
 
 Client developers can point to any version of your smart contract APIs that they want by changing a single URL parameter, and Kontour will make sure all of the web3.js SDKs are automatically generated and kept up to date! 
 
