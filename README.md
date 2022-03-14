@@ -1,25 +1,23 @@
 # Quikdraw
 ### A CLI sidekick to [Kontour](https://kontour.io), the superpowered web3 private testnet.
 
-
 ## Getting started
 1. Install Quikdraw globally
    ```
    npm install -g quikdraw
    ```
 2. Navigate to your smart contract repo. This is normally the path where you've installed Truffle or Hardhat.
-3. Initialize your `.quikdrawconfig` by answering a few simple questions (this example is for a Truffle repo)
+3. Initialize your [`.quikdrawconfig` (learn more)](#FAQ) by answering a few simple questions (this example is for a Truffle repo)
     ```
     quikdraw init
     ```
-4. To learn more about the options in `.quikdrawconfig`, [go here](#FAQ)
-5. Write some <b>awesome awesome contract code</b>
-6. You're ready to test your contracts and your client dev teammate is waiting for you to deploy to a shared testnet. Have no fear, you don't need to go to a faucet or upload those pesky ABIs anywhere! Just run
+4. Write some <b>awesome awesome contract code</b>
+5. You're ready to test your contracts and your client dev teammate is waiting for you to deploy to a shared testnet. Have no fear, you don't need to go to a faucet or upload those pesky ABIs anywhere! Just run
    ```
    quikdraw go
    ```
-7. Your contracts will be compiled and added to a new project as a new draft version. We'll give you a handy Kontour link and save these settings for the next time around.
-8. Enjoy using Kontour to browse your private test node and share a one-click SDK url to your teammates! Whenever you want to deploy a new round of contracts, just `quikdraw go` and your team will automatically be up to date, with <b>zero address sharing, zero ABIs, zero test tokens, and zero client changes necessary!</b>
+6. Your contracts will be compiled and added to a new project as a new draft version. We'll give you a handy Kontour link and save these settings for the next time around.
+7. Enjoy using Kontour to browse your private test node and share a one-click SDK url to your teammates! Whenever you want to deploy a new round of contracts, just `quikdraw go` and your team will automatically be up to date, with <b>zero address sharing, zero ABIs, zero test tokens, and zero client changes necessary!</b>
 
 ## Automatic deploys
 Kontour supports automated deploys via `quikdraw deploy` using a script of your choice. Deploy scripts are incredibly easy to write:
