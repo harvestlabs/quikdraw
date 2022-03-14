@@ -1,24 +1,39 @@
 import fs from "fs";
 import path from "path";
-import FormData from "form-data";
-import fetch from "node-fetch";
-import pLimit from "p-limit";
 import {
   HELP_URL,
   CONFIG_NAME,
   INIT_CMD,
   GO_CMD,
-  INGEST_URL,
-  PROJECT_HOST,
+  VERSION_HOST,
 } from "./lib/constants";
 import { askQuestion, configSearch } from "./lib/helpers";
 import { ConfigData } from "./lib/types";
+import { endSession } from "./lib/uploader";
 
 global.randomBytes = require("crypto").randomBytes;
 
-const limit = pLimit(4);
 const configFile = configSearch();
 const currDir = process.cwd();
+
+const getConfig = (): ConfigData => {
+  try {
+    fs.statSync(configFile);
+  } catch (e) {
+    console.log(
+      `${CONFIG_NAME} doesn't exist - have you run 'quikdraw init'?\n`
+    );
+    process.exit(0);
+  }
+  const data: ConfigData = JSON.parse(fs.readFileSync(configFile).toString());
+  if (!data.apiKey || data.apiKey.length === 0) {
+    console.log(
+      "Sorry, you've gotta have an API key to use Kontour - visit https://kontour.io/key to get one for free!"
+    );
+    process.exit(0);
+  }
+  return data;
+};
 
 const Commands = {
   init: async () => {
@@ -81,27 +96,15 @@ const Commands = {
       versionId: "",
       contracts: contracts || ".*",
     };
-    fs.writeFileSync(toWritePath, JSON.stringify(data));
+    fs.writeFileSync(toWritePath, JSON.stringify(data, null, 2));
 
     console.log(`Successfully created ${toWritePath}`);
     process.exit(0);
   },
   go: async () => {
-    try {
-      fs.statSync(configFile);
-    } catch (e) {
-      console.log(
-        `${CONFIG_NAME} doesn't exist - have you run 'quikdraw init'?\n`
-      );
-      process.exit(0);
-    }
-    const data: ConfigData = JSON.parse(fs.readFileSync(configFile).toString());
-    if (!data.apiKey || data.apiKey.length === 0) {
-      console.log(
-        "Sorry, you've gotta have an API key to use Kontour - visit https://kontour.io/key to get one for free!"
-      );
-      process.exit(0);
-    }
+    const { uploadPaths, startSession } = require("./lib/uploader");
+
+    const data = getConfig();
     let fqPath, compiledContractPaths;
     if (data.type === "truffle") {
       const truffle = require("truffle");
@@ -142,59 +145,25 @@ const Commands = {
       .split(",")
       .map((n) => new RegExp(n.trim()));
 
-    let projectData;
-    const resp = await fetch(`${INGEST_URL}/start`, {
-      method: "POST",
-      body: JSON.stringify({
-        apiKey: data.apiKey,
-        projectId: data.projectId || null,
-        versionId: data.versionId || null,
-      }),
-      headers: { "Content-Type": "application/json" },
+    const pathsToUpload = compiledContractPaths.filter((contractPath) => {
+      let readBuffer = fs.readFileSync(contractPath);
+
+      const contract = JSON.parse(readBuffer.toString());
+      const matches = filterContractNames.find((r) =>
+        contract.contractName.match(r)
+      );
+      return matches;
     });
-    const { projectId, versionId } = await resp.json();
-    console.log(`\nUploading to project ${projectId}, version ${versionId}`);
 
-    await Promise.all(
-      compiledContractPaths.map((contractPath) => {
-        return limit(async () => {
-          let readBuffer = fs.readFileSync(contractPath);
-
-          const contract = JSON.parse(readBuffer.toString());
-          const matches = filterContractNames.find((r) =>
-            contract.contractName.match(r)
-          );
-          if (!matches) {
-            return;
-          }
-
-          console.log(`Uploading ${contract.contractName}`);
-          const form = new FormData();
-          form.append("file", readBuffer, "file.json");
-          form.append("apiKey", data.apiKey);
-          form.append("projectId", projectId);
-          form.append("versionId", versionId);
-          await fetch(INGEST_URL, {
-            method: "POST",
-            body: form,
-            headers: { ...form.getHeaders() },
-          });
-          console.log(`Uploaded ${contract.contractName}`);
-        });
-      })
+    const { projectId, versionId } = await startSession(data);
+    const { uploadedNames } = await uploadPaths(
+      pathsToUpload,
+      projectId,
+      versionId,
+      data.apiKey
     );
-    await fetch(`${INGEST_URL}/end`, {
-      method: "POST",
-      body: JSON.stringify({
-        apiKey: data.apiKey,
-        projectId: projectId,
-        versionId: versionId,
-      }),
-      headers: { "Content-Type": "application/json" },
-    });
-    console.log(
-      `Find your project at ${PROJECT_HOST}/${projectId}/${versionId}`
-    );
+    await endSession(projectId, versionId, data.apiKey);
+    console.log(`Find your project at ${VERSION_HOST}/${versionId}`);
     const refresh = await askQuestion(
       `Do you want to update your current project settings to this draft? [Y/n]: `
     );
@@ -207,7 +176,7 @@ const Commands = {
   },
 };
 
-async function Runner() {
+export async function Runner() {
   const [command, ...rest] = process.argv.slice(2);
   switch (command) {
     case INIT_CMD:
@@ -217,4 +186,9 @@ async function Runner() {
   }
 }
 
-Runner();
+export async function migrate(contractName: string, args: any[]) {
+  const migrator = require("./lib/migrator");
+  const data = getConfig();
+
+  await migrator.migrate(contractName, data, args);
+}
