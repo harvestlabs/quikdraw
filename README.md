@@ -47,7 +47,6 @@ This is a JSON configuration file for quikdraw and is created by `quikdraw init`
 - `apiKey`: Your Kontour API key - this authenticates Quikdraw on our servers
 - `projectId`: Your Kontour project ID - you can change this if you're switching projects, but likely won't have to!
 - `versionId`: The current Kontour version that you're working on. If you publish a version and move on, change this or erase it to have Quikdraw make you a new one.
-- `contracts`: A comma-separated list of regexes, Quikdraw will only upload contracts whose name matches this. Leave it empty to upload everything.
 - `deploy`: The path to a script that you'd like to run using `quikdraw deploy`  [(more here)](#DEPLOY)
 
 ### quikdraw init
@@ -62,8 +61,6 @@ Location of your truffle-config.js [./truffle-config.js]: ./truffle-development.
 Grab your API key from https://kontour.io/key (required!): *********************
 
 Default projectId [null]:
-
-Comma-separated list of contracts to upload to Kontour [.*]: Mint.*,SwapRouter
 ```
 
 Let's break this down:
@@ -71,7 +68,6 @@ Let's break this down:
 - For Truffle projects, we require a path to the config file that you want to use for contract compilation.
 - You'll need your API key to grant access to Kontour, [so grab one here!](https://kontour.io/key)
 - Don't worry if you don't have a project ID yet, Quikdraw will make one for you automatically!
-- If you want to only upload a subset of contracts, putting regexes here will filter out any names that don't match. Leave it empty to upload everything :)
 
 ### quikdraw go
 ```

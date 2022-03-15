@@ -10,7 +10,6 @@ const limit = pLimit(4);
 export async function startSession(data: ConfigData): Promise<{
   projectId: string;
   versionId: string;
-  provider: string;
 }> {
   const resp = await fetch(`${INGEST_URL}/start`, {
     method: "POST",

@@ -63,9 +63,6 @@ const Commands = {
           (await askQuestion(
             `\nLocation of your truffle-config.js [./truffle-config.js]: `
           )) || "./truffle-config.js";
-        if (truffleConfig && !path.isAbsolute(truffleConfig)) {
-          truffleConfig = path.join(currDir, truffleConfig);
-        }
         break;
       case "2":
         type = "hardhat";
@@ -84,9 +81,6 @@ const Commands = {
       "\nGrab your API key from https://kontour.io/key (required!): "
     );
     const projectId = await askQuestion("\nDefault projectId [null]: ");
-    const contracts = await askQuestion(
-      "\nComma-separated list of contracts to upload to Kontour [.*]: "
-    );
 
     const data: ConfigData = {
       type: type,
@@ -94,7 +88,6 @@ const Commands = {
       apiKey,
       projectId,
       versionId: "",
-      contracts: contracts || ".*",
     };
     fs.writeFileSync(toWritePath, JSON.stringify(data, null, 2));
 
@@ -141,23 +134,9 @@ const Commands = {
     }
     console.log("\nUploading compiled sources to Kontour now...");
 
-    const filterContractNames = data.contracts
-      .split(",")
-      .map((n) => new RegExp(n.trim()));
-
-    const pathsToUpload = compiledContractPaths.filter((contractPath) => {
-      let readBuffer = fs.readFileSync(contractPath);
-
-      const contract = JSON.parse(readBuffer.toString());
-      const matches = filterContractNames.find((r) =>
-        contract.contractName.match(r)
-      );
-      return matches;
-    });
-
     const { projectId, versionId } = await startSession(data);
     const { uploadedNames } = await uploadPaths(
-      pathsToUpload,
+      compiledContractPaths,
       projectId,
       versionId,
       data.apiKey
