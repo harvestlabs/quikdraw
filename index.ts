@@ -101,7 +101,10 @@ const Commands = {
     let fqPath, compiledContractPaths;
     if (data.type === "truffle") {
       const truffle = require("truffle");
-      const truffleConfig = require(data.truffleConfigPath);
+      const truffleConfig = require(path.resolve(
+        currDir,
+        data.truffleConfigPath
+      ));
       await truffle.contracts.compile(truffleConfig);
       fqPath = truffleConfig.contracts_build_directory;
       fqPath = path.resolve(currDir, truffleConfig.contracts_build_directory);
