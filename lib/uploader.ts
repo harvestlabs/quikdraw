@@ -53,6 +53,14 @@ export async function uploadPaths(
       return limit(async () => {
         let readBuffer = fs.readFileSync(contractPath);
         const contract = JSON.parse(readBuffer.toString());
+        if (
+          contract.bytecode.length == 0 ||
+          contract.abi.length === 0 ||
+          contract.bytecode === "0x"
+        ) {
+          console.log(`Skipping ${contract.contractName}`);
+          return;
+        }
 
         console.log(`Uploading ${contract.contractName}`);
         const form = new FormData();
