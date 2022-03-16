@@ -4,4 +4,5 @@ export interface ConfigData {
   apiKey: string;
   projectId: string;
   versionId: string;
+  deploy?: string;
 }

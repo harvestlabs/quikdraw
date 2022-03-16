@@ -2,25 +2,25 @@
 ### A CLI sidekick to [Kontour](https://kontour.io), the superpowered web3 private testnet.
 
 ## Getting started
-1. Install Quikdraw globally
-   ```
-   npm install -g quikdraw
-   ```
+1. Install Quikdraw into your project
+    ```
+    npm install quikdraw
+    ```
 2. Navigate to your smart contract repo. This is normally the path where you've installed Truffle or Hardhat.
 3. Initialize your [`.quikdrawconfig` (learn more)](#FAQ) by answering a few simple questions (this example is for a Truffle repo)
     ```
-    quikdraw init
+    npx quikdraw init
     ```
 4. Write some <b>awesome awesome contract code</b>
 5. You're ready to test your contracts and your client dev teammate is waiting for you to deploy to a shared testnet. Have no fear, you don't need to go to a faucet or upload those pesky ABIs anywhere! Just run
-   ```
-   quikdraw go
-   ```
+    ```
+    npx quikdraw go
+    ```
 6. Your contracts will be compiled and added to a new project as a new draft version. We'll give you a handy Kontour link and save these settings for the next time around.
-7. Enjoy using Kontour to browse your private test node and share a one-click SDK url to your teammates! Whenever you want to deploy a new round of contracts, just `quikdraw go` and your team will automatically be up to date, with <b>zero address sharing, zero ABIs, zero test tokens, and zero client changes necessary!</b>
+7. Enjoy using Kontour to browse your private test node and share a one-click SDK url to your teammates! Whenever you want to deploy a new round of contracts, just `npx quikdraw go` and your team will automatically be up to date, with <b>zero address sharing, zero ABIs, zero test tokens, and zero client changes necessary!</b>
 
 ## Automatic deploys
-Kontour supports automated deploys via `quikdraw deploy` using a script of your choice. Deploy scripts are incredibly easy to write:
+Kontour supports automated deploys via `npx quikdraw deploy` using a script of your choice. Deploy scripts are incredibly easy to write:
 ```
 // migrate.js
 const migrate = require("quikdraw").migrate;
@@ -32,7 +32,7 @@ async function main() {
 main()
 ```
 
-Adding `"deploy": "./migrate.js"` to your `.quikdrawconfig` will trigger this script each time you run `quikdraw deploy`, and your contracts will show up in the latest Kontour instance.
+Adding `"deploy": "./migrate.js"` to your `.quikdrawconfig` will trigger this script each time you run `npx quikdraw deploy`, and your contracts will show up in the latest Kontour instance.
 
 
 <a name="FAQ"></a>
@@ -40,14 +40,14 @@ Adding `"deploy": "./migrate.js"` to your `.quikdrawconfig` will trigger this sc
 
 ### .quikdrawconfig
 
-This is a JSON configuration file for quikdraw and is created by `quikdraw init`. It has the following fields:
+This is a JSON configuration file for quikdraw and is created by `npx quikdraw init`. It has the following fields:
 
 - `type`: [truffle | hardhat]
 - `truffleConfigPath`: For Truffle users only, points to your Truffle config file
 - `apiKey`: Your Kontour API key - this authenticates Quikdraw on our servers
 - `projectId`: Your Kontour project ID - you can change this if you're switching projects, but likely won't have to!
 - `versionId`: The current Kontour version that you're working on. If you publish a version and move on, change this or erase it to have Quikdraw make you a new one.
-- `deploy`: The path to a script that you'd like to run using `quikdraw deploy`  [(more here)](#DEPLOY)
+- `deploy`: The path to a script that you'd like to run using `npx quikdraw deploy`  [(more here)](#DEPLOY)
 
 ### quikdraw init
 ```                                                                                         
@@ -78,7 +78,6 @@ Uploaded Bounty
 Uploaded VotableBounty
 
 Find your project at https://kontour.io/versions/bd47e6e7-1311-4a7c-8137-f80361c6d2ee
-Do you want to update your current project settings to this draft? [Y/n]: Y
 ```
 Under the hood, Quikdraw triggers your project's Truffle or Hardhat compilation. It then takes those compiled artifacts and sends them to your private Kontour project, which makes them available to add to your node. Whenever you make changes and compile a new set of contracts, your Kontour draft will update to those new versions.
 
@@ -92,7 +91,7 @@ SimpleStorage was deployed at 0x5DC6eD4eC66c291eDDFebFF37A17023B17224fEe!
 Check out https://kontour.io/instances/13090f7f-aa89-4b1d-a906-ab2cf75d636e
 ```
 
-If you've linked a migration script under your `.quikdrawconfig`, this command will run that script and deploy the contracts in your version automatically. This deploy is executed by your test node, so you don't have to attach an address or worry about gas fees, it's instantaneous!
+If you've linked a migration script under the `deploy` field of your `.quikdrawconfig`, this command will run that script and deploy the contracts in your version automatically. This deploy is executed by your test node, so you don't have to attach an address or worry about gas fees, it's instantaneous!
 
 ## FAQ
 ### Who...who are you?

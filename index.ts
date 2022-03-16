@@ -6,6 +6,7 @@ import {
   INIT_CMD,
   GO_CMD,
   VERSION_HOST,
+  DEPLOY_CMD,
 } from "./lib/constants";
 import { askQuestion, configSearch } from "./lib/helpers";
 import { ConfigData } from "./lib/types";
@@ -146,15 +147,14 @@ const Commands = {
     );
     await endSession(projectId, versionId, data.apiKey);
     console.log(`Find your project at ${VERSION_HOST}/${versionId}`);
-    const refresh = await askQuestion(
-      `Do you want to update your current project settings to this draft? [Y/n]: `
-    );
-    if (refresh !== "n") {
-      data.projectId = projectId;
-      data.versionId = versionId;
-      fs.writeFileSync(configFile, JSON.stringify(data));
-    }
+    data.projectId = projectId;
+    data.versionId = versionId;
+    fs.writeFileSync(configFile, JSON.stringify(data));
     process.exit(0);
+  },
+  deploy: async () => {
+    const data = getConfig();
+    require(data.deploy);
   },
 };
 
@@ -165,6 +165,8 @@ export async function Runner() {
       await Commands.init();
     case GO_CMD:
       await Commands.go();
+    case DEPLOY_CMD:
+      await Commands.deploy();
   }
 }
 
