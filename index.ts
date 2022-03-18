@@ -12,12 +12,14 @@ import { askQuestion, configSearch } from "./lib/helpers";
 import { ConfigData } from "./lib/types";
 import { endSession } from "./lib/uploader";
 
-global.randomBytes = require("crypto").randomBytes;
-
 const configFile = configSearch();
 const currDir = process.cwd();
 
 const getConfig = (): ConfigData => {
+  if (!configFile) {
+    console.log("Looks like you haven't run init yet");
+    process.exit(0);
+  }
   try {
     fs.statSync(configFile);
   } catch (e) {
@@ -36,7 +38,7 @@ const getConfig = (): ConfigData => {
   return data;
 };
 
-const Commands = {
+export const Commands = {
   init: async () => {
     let toWritePath = configFile;
     if (toWritePath) {
@@ -96,6 +98,10 @@ const Commands = {
     process.exit(0);
   },
   go: async () => {
+    if (!configFile) {
+      console.log("Looks like you haven't run init yet");
+      process.exit(0);
+    }
     const { uploadPaths, startSession } = require("./lib/uploader");
 
     const data = getConfig();
@@ -154,7 +160,7 @@ const Commands = {
   },
   deploy: async () => {
     const data = getConfig();
-    require(data.deploy);
+    require(data.deploy!);
   },
 };
 

@@ -19,7 +19,7 @@ export function askQuestion(query: string): Promise<string> {
 
 export function configSearch(): string | null {
   let currPath = process.cwd();
-  let lastSeen = null;
+  let lastSeen = "";
   while (currPath != "/" && lastSeen !== currPath) {
     lastSeen = currPath;
     if (fs.readdirSync(currPath).indexOf(CONFIG_NAME) !== -1) {

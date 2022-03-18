@@ -1,6 +1,6 @@
 {
   "name": "quikdraw",
-  "version": "0.1.3",
+  "version": "0.1.7",
   "description": "A CLI tool to bring your Truffle project onto Kontour",
   "main": "dist/index.js",
   "bin": {
@@ -27,12 +27,15 @@
   },
   "homepage": "https://github.com/harvestlabs/quikdraw#readme",
   "dependencies": {
-    "@types/mocha": "^9.1.0",
-    "crypto": "^1.0.1",
     "form-data": "^4.0.0",
-    "hardhat": "^2.9.1",
     "node-fetch": "2",
-    "p-limit": "3.1.0",
-    "truffle": "^5.5.4"
+    "p-limit": "3.1.0"
+  },
+  "peerDependencies": {
+    "truffle": "^5.5.4",
+    "hardhat": "^2.9.1"
+  },
+  "devDependencies": {
+    "@types/mocha": "^9.1.0"
   }
 }
