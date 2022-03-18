@@ -1,5 +1,5 @@
 import fetch from "node-fetch";
-import { INGEST_URL, INSTANCE_HOST } from "./constants";
+import { INGEST_URL, INSTANCE_HOST, VERSION_HOST } from "./constants";
 import { ConfigData } from "./types";
 
 export async function migrate(
@@ -20,7 +20,8 @@ export async function migrate(
     }),
     headers: { "Content-Type": "application/json" },
   });
-  const { id, address, node_id, params, instance_id } = await resp.json();
+  const { id, address, node_id, params, version_id, instance_id } =
+    await resp.json();
   console.log(`${contractName} was deployed at ${address}!`);
-  console.log(`Check out ${INSTANCE_HOST}/${instance_id}`);
+  console.log(`Check out ${VERSION_HOST}/${version_id}`);
 }

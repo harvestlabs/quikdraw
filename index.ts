@@ -160,7 +160,8 @@ export const Commands = {
   },
   deploy: async () => {
     const data = getConfig();
-    require(data.deploy!);
+    const deployScript = path.resolve(currDir, data.deploy!);
+    require(deployScript);
   },
 };
 
