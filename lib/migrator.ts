@@ -6,7 +6,7 @@ export async function migrate(
   contractName: string,
   data: ConfigData,
   args: any[]
-): Promise<any> {
+): Promise<string> {
   const { apiKey, projectId, versionId } = data;
   console.log(`Deploying ${contractName}`);
   const resp = await fetch(`${INGEST_URL}/migrate`, {
@@ -24,4 +24,5 @@ export async function migrate(
     await resp.json();
   console.log(`${contractName} was deployed at ${address}!`);
   console.log(`Check out ${VERSION_HOST}/${version_id}`);
+  return address;
 }

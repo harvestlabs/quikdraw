@@ -177,9 +177,12 @@ export async function Runner() {
   }
 }
 
-export async function migrate(contractName: string, args: any[]) {
+export async function migrate(
+  contractName: string,
+  args: any[]
+): Promise<string> {
   const migrator = require("./lib/migrator");
   const data = getConfig();
 
-  await migrator.migrate(contractName, data, args);
+  return await migrator.migrate(contractName, data, args);
 }

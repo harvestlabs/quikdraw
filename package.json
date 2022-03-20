@@ -1,13 +1,14 @@
 {
   "name": "quikdraw",
-  "version": "0.1.10",
+  "version": "0.1.13",
   "description": "A CLI tool to bring your Truffle project onto Kontour",
   "main": "dist/index.js",
   "bin": {
     "quikdraw": "./cli.js"
   },
   "scripts": {
-    "build": "tsc -p ./"
+    "build": "tsc -p ./",
+    "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",
@@ -33,7 +34,7 @@
   },
   "peerDependencies": {
     "truffle": "^5.5.4",
-    "hardhat": "^2.9.1"
+    "hardhat": "^2.0.0"
   },
   "devDependencies": {
     "@types/mocha": "^9.1.0"
