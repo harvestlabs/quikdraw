@@ -7,6 +7,21 @@ import { ConfigData } from "./types";
 
 const limit = pLimit(4);
 
+export async function projectIdLookup(
+  versionId: string,
+  apiKey: string
+): Promise<{ id: string }> {
+  const resp = await fetch(`${INGEST_URL}/projectLookup`, {
+    method: "POST",
+    body: JSON.stringify({
+      apiKey: apiKey,
+      versionId: versionId,
+    }),
+    headers: { "Content-Type": "application/json" },
+  });
+  return await resp.json();
+}
+
 export async function startSession(data: ConfigData): Promise<{
   projectId: string;
   versionId: string;

@@ -7,10 +7,12 @@ import {
   GO_CMD,
   VERSION_HOST,
   DEPLOY_CMD,
+  HELP_CMD,
+  GO_URL_REGEX,
 } from "./lib/constants";
 import { askQuestion, configSearch } from "./lib/helpers";
 import { ConfigData } from "./lib/types";
-import { endSession } from "./lib/uploader";
+import { endSession, projectIdLookup } from "./lib/uploader";
 
 const configFile = configSearch();
 const currDir = process.cwd();
@@ -31,7 +33,7 @@ const getConfig = (): ConfigData => {
   const data: ConfigData = JSON.parse(fs.readFileSync(configFile).toString());
   if (!data.apiKey || data.apiKey.length === 0) {
     console.log(
-      "Sorry, you've gotta have an API key to use Kontour - visit https://kontour.io/key to get one for free!"
+      "Sorry, you've gotta have an API key to use Kontour - visit https://kontour.io/alpha to get one for free!"
     );
     process.exit(0);
   }
@@ -81,7 +83,7 @@ export const Commands = {
     }
 
     const apiKey = await askQuestion(
-      "\nGrab your API key from https://kontour.io/key (required!): "
+      "\nGrab your API key from https://kontour.io/alpha (required!): "
     );
     const projectId = await askQuestion("\nDefault projectId [null]: ");
 
@@ -97,14 +99,60 @@ export const Commands = {
     console.log(`Successfully created ${toWritePath}`);
     process.exit(0);
   },
-  go: async () => {
+  go: async (maybeArgs) => {
     if (!configFile) {
       console.log("Looks like you haven't run init yet");
       process.exit(0);
     }
+    const data = getConfig();
+    if (maybeArgs.length > 0) {
+      const match = maybeArgs[0].match(GO_URL_REGEX);
+      if (!match) {
+        console.log(
+          "quikdraw go [url] must be in the form of kontour.io/[projects|versions]/:id"
+        );
+        process.exit(0);
+      }
+      switch (
+        match[2] // projects | versions
+      ) {
+        case "projects":
+          const projectId = match[3]; // the id
+          data.projectId = projectId;
+          data.versionId = null;
+          break;
+        case "versions":
+          const versionId = match[3]; // the id
+          const resp = await projectIdLookup(versionId, data.apiKey);
+          data.projectId = resp.id;
+          data.versionId = versionId;
+          break;
+      }
+    }
+    if (!data.projectId) {
+      const ans = await askQuestion(
+        "\nNo projectId found in .quikdrawconfig, this run will create a new project [Y/n]: "
+      );
+      if (ans.toLowerCase() === "n") {
+        console.log(
+          "Replace your projectId in .quikdrawconfig or use `go kontour.io/projects/{id}`"
+        );
+        process.exit(0);
+      }
+    }
+    if (!data.versionId) {
+      const ans = await askQuestion(
+        "\nNo versionId found in .quikdrawconfig, this run will create a new version [Y/n]: "
+      );
+      if (ans.toLowerCase() === "n") {
+        console.log(
+          "Replace your versionId in .quikdrawconfig or use `go kontour.io/versions/{id}`"
+        );
+        process.exit(0);
+      }
+    }
     const { uploadPaths, startSession } = require("./lib/uploader");
 
-    const data = getConfig();
     let fqPath, compiledContractPaths;
     if (data.type === "truffle") {
       const truffle = require("truffle");
@@ -163,6 +211,20 @@ export const Commands = {
     const deployScript = path.resolve(currDir, data.deploy!);
     require(deployScript);
   },
+  help: async () => {
+    console.log(
+      "quikdraw help: see https://www.npmjs.com/package/quikdraw for detailed documentation.\n"
+    );
+    console.log(
+      "quikdraw init: creates a new .quikdrawconfig if none exists\n"
+    );
+    console.log(
+      "quikdraw go [url]: given an optional url in the form kontour.io/[projects|versions]/id, compiles contracts and deploys to the Kontour instance in .quikdrawconfig\n"
+    );
+    console.log(
+      "quikdraw deploy: if a 'deploy' field exists in .quikdrawconfig, runs the script"
+    );
+  },
 };
 
 export async function Runner() {
@@ -171,9 +233,11 @@ export async function Runner() {
     case INIT_CMD:
       await Commands.init();
     case GO_CMD:
-      await Commands.go();
+      await Commands.go(rest);
     case DEPLOY_CMD:
       await Commands.deploy();
+    case HELP_CMD:
+      await Commands.help();
   }
 }
 
