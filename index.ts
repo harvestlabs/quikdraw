@@ -210,6 +210,7 @@ export const Commands = {
     const data = getConfig();
     const deployScript = path.resolve(currDir, data.deploy!);
     require(deployScript);
+    process.exit(0);
   },
   help: async () => {
     console.log(

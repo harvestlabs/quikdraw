@@ -66,6 +66,10 @@ export async function uploadPaths(
   await Promise.all(
     pathsToUpload.map((contractPath) => {
       return limit(async () => {
+        const stat = fs.lstatSync(contractPath);
+        if (!stat.isFile()) {
+          return;
+        }
         let readBuffer = fs.readFileSync(contractPath);
         const contract = JSON.parse(readBuffer.toString());
         if (contract.bytecode.length == 0 || contract.bytecode === "0x") {

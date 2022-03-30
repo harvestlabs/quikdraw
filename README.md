@@ -69,7 +69,7 @@ Let's break this down:
 - You'll need your API key to grant access to Kontour, [so grab one here!](https://kontour.io/key)
 - Don't worry if you don't have a project ID yet, Quikdraw will make one for you automatically!
 
-### quikdraw go
+### quikdraw go [url]
 ```
 Uploading compiled sources to Kontour now...
 Uploading Bounty
@@ -79,6 +79,12 @@ Uploaded VotableBounty
 
 Find your project at https://kontour.io/versions/bd47e6e7-1311-4a7c-8137-f80361c6d2ee
 ```
+`[url]` is optional, and can be
+- `kontour.io/projects/{project_id}` to automatically generate a new version of your project
+- `kontour.io/versions/{version_id}` to automatically update that version
+
+If `url` is not given, Quikdraw will use the values in your .quikdrawconfig during the run.
+
 Under the hood, Quikdraw triggers your project's Truffle or Hardhat compilation. It then takes those compiled artifacts and sends them to your private Kontour project, which makes them available to add to your node. Whenever you make changes and compile a new set of contracts, your Kontour draft will update to those new versions.
 
 Client developers can point to any version of your smart contract APIs that they want by changing a single URL parameter, and Kontour will make sure all of the web3.js SDKs are automatically generated and kept up to date! 

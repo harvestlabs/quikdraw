@@ -1,6 +1,6 @@
 {
   "name": "quikdraw",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "description": "A CLI tool to bring your Truffle project onto Kontour",
   "main": "dist/index.js",
   "bin": {
