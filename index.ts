@@ -9,6 +9,7 @@ import {
   DEPLOY_CMD,
   HELP_CMD,
   GO_URL_REGEX,
+  UPLOAD_CMD,
 } from "./lib/constants";
 import { askQuestion, configSearch } from "./lib/helpers";
 import { ConfigData } from "./lib/types";
@@ -178,14 +179,22 @@ export const Commands = {
 
       const contracts = fs.readdirSync(parentPath);
       compiledContractPaths = [];
-      contracts.forEach((contractPath) => {
+      while (contracts.length > 0) {
+        const contractPath = contracts.pop();
         const fullPath = path.join(parentPath, contractPath);
-        const jsonFile = fs.readdirSync(fullPath).filter((filename) => {
-          const parts = filename.split(".");
-          return parts.indexOf("dbg") !== parts.length - 2;
-        })[0];
-        compiledContractPaths.push(path.resolve(fullPath, jsonFile));
-      });
+        fs.readdirSync(fullPath).forEach((filename) => {
+          const stat = fs.lstatSync(path.join(fullPath, filename));
+          if (!stat.isFile()) {
+            contracts.push(path.join(contractPath, filename));
+          } else {
+            const parts = filename.split(".");
+            const isJson = parts.indexOf("dbg") !== parts.length - 2;
+            if (isJson) {
+              compiledContractPaths.push(path.resolve(fullPath, filename));
+            }
+          }
+        });
+      }
     } else {
       console.log(".quikdrawconfig had a type that was unknown");
       process.exit(0);
@@ -212,6 +221,47 @@ export const Commands = {
     require(deployScript);
     process.exit(0);
   },
+  uploadPaths: async (args) => {
+    const data = getConfig();
+    const artifacts = args[0];
+    const sourcesPath = path.relative(currDir, args[1]);
+    const parentPath = path.resolve(currDir, path.join(artifacts, sourcesPath));
+
+    const contracts = fs.readdirSync(parentPath);
+    const compiledContractPaths = [];
+    while (contracts.length > 0) {
+      const contractPath = contracts.pop();
+      const fullPath = path.join(parentPath, contractPath);
+      fs.readdirSync(fullPath).forEach((filename) => {
+        const stat = fs.lstatSync(path.resolve(fullPath, filename));
+        if (!stat.isFile()) {
+          contracts.push(path.join(contractPath, filename));
+        } else {
+          const parts = filename.split(".");
+          const isJson = parts.indexOf("dbg") !== parts.length - 2;
+          if (isJson) {
+            compiledContractPaths.push(path.resolve(fullPath, filename));
+          }
+        }
+      });
+    }
+    console.log("\nUploading compiled sources to Kontour now...");
+    const { uploadPaths, startSession } = require("./lib/uploader");
+
+    const { projectId, versionId } = await startSession(data);
+    const { uploadedNames } = await uploadPaths(
+      compiledContractPaths,
+      projectId,
+      versionId,
+      data.apiKey
+    );
+    await endSession(projectId, versionId, data.apiKey);
+    console.log(`Find your project at ${VERSION_HOST}/${versionId}`);
+    data.projectId = projectId;
+    data.versionId = versionId;
+    fs.writeFileSync(configFile, JSON.stringify(data));
+    process.exit(0);
+  },
   help: async () => {
     console.log(
       "quikdraw help: see https://www.npmjs.com/package/quikdraw for detailed documentation.\n"
@@ -235,6 +285,8 @@ export async function Runner() {
       await Commands.init();
     case GO_CMD:
       await Commands.go(rest);
+    case UPLOAD_CMD:
+      await Commands.uploadPaths(rest);
     case DEPLOY_CMD:
       await Commands.deploy();
     case HELP_CMD:
